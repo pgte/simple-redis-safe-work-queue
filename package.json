@@ -1,0 +1,32 @@
+{
+  "name": "simple-redis-safe-work-queue",
+  "version": "0.0.1",
+  "description": "Redis-based simple and safe work queue ",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap tests/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/pgte/simple-redis-safe-work-queue.git"
+  },
+  "keywords": [
+    "redis",
+    "work",
+    "queue",
+    "safe",
+    "simple"
+  ],
+  "author": "pgte",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pgte/simple-redis-safe-work-queue/issues"
+  },
+  "homepage": "https://github.com/pgte/simple-redis-safe-work-queue",
+  "dependencies": {
+    "json-stringify-safe": "^5.0.0",
+    "node-uuid": "^1.4.1",
+    "redis": "^0.10.3",
+    "xtend": "^3.0.0"
+  }
+}
