@@ -101,8 +101,15 @@ function createWorker(queueName, workerFn, options) {
     }
 
     function onWorkerFinished(err) {
-      if (err) client.repush(work);
-      else dequeue(work.id, dequeued);
+      if (err) {
+        self.emit('worker error');
+        pending --;
+        client.repush(work);
+        listen();
+      } else {
+        self.emit('work done', work);
+        dequeue(work.id, dequeued);
+      }
     }
   }
 

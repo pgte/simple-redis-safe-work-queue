@@ -27,6 +27,7 @@
 
 ## Worker Events:
 
-* ready: when redis client is ready
-* restored: when all the pending work is restored
-* listening: when
+* `emit('ready')`: when redis client is ready
+* `emit('listening')`: when listening for work
+* `emit('worker error', err)`: when a worker error occurs
+* `emit('work done', payload)`: when a worker finishes a piece of work
