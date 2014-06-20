@@ -16,6 +16,9 @@ function createClient(queueName, options) {
   var queues = {
     pending: queueName + '-pending'
   }
+
+  var stopping = false;
+
   init();
 
   self.push = push;
@@ -96,8 +99,14 @@ function createClient(queueName, options) {
 
   /// Stop
 
-  function stop() {
+  function stop(cb) {
+    if (stopping) return cb();
+    stopping = true;
     options.client.quit();
+    options.client.once('end', function() {
+      self.emit('end');
+      if (cb) cb();
+    });
   }
 
 }

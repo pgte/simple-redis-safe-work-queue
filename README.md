@@ -23,7 +23,7 @@
 * redisOptions: any option allowed by the [redis client](https://github.com/mranney/node_redis)
 * client: a redis client instance (optional, if you want to create / reuse your own client)
 * maxConcurrency: the maximum pending work units. defaults to 10.
-* popTimeout: the worker pop timeout, after which it retries, in miliseconds. Defaults to 3 seconds.
+* popTimeout: the worker pop timeout, after which it retries, in seconds. Defaults to 3 seconds.
 
 ## Worker Events:
 

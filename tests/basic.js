@@ -5,6 +5,10 @@ var Queue = require('../')
 var queue = uuid();
 var client, worker;
 
+var workerOptions = {
+  popTimeout: 1
+}
+
 test('create client', function(t) {
   client = Queue.client(queue);
   client.once('ready', t.end.bind(t));
@@ -26,7 +30,7 @@ test('push work with callback', function(t) {
 });
 
 test('creates worker that gets work', function(t) {
-  worker = Queue.worker(queue, work);
+  worker = Queue.worker(queue, work, workerOptions);
 
   var times = 0;
   var payloads = [];
@@ -44,11 +48,9 @@ test('creates worker that gets work', function(t) {
 });
 
 test('stop client', function(t) {
-  client.stop();
-  t.end();
+  client.stop(t.end.bind(t));
 });
 
 test('stop worker', function(t) {
-  worker.stop();
-  t.end();
+  worker.stop(t.end.bind(t));
 });

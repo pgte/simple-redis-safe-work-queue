@@ -1,6 +1,5 @@
 var defaultWorkerOptions = require('./default_worker_options');
 var EventEmitter = require('events').EventEmitter;
-var scripts = require('./scripts');
 var Client = require('./client');
 var extend = require('xtend');
 var Redis = require('redis');
@@ -13,6 +12,12 @@ function createWorker(queueName, workerFn, options) {
   // PENDING: process timeouts
 
   var self = new EventEmitter();
+
+  if (typeof options == 'number') {
+    options = {
+      maxConcurrency: options
+    };
+  }
 
   options = extend({}, defaultWorkerOptions, options || {});
 
@@ -57,67 +62,86 @@ function createWorker(queueName, workerFn, options) {
 
   function listen() {
     if (! stopping && ! listening && pending < options.maxConcurrency) {
-
       self.emit('listening');
       listening = true;
 
-      options.client.brpoplpush(queues.pending, queues.stalled, options.popTimeout / 1e3, onPop);
+      options.client.brpoplpush(queues.pending, queues.stalled, options.popTimeout, onPop);
     }
   }
 
   function onPop(err, workId) {
-    console.log('popped:', workId);
     listening = false;
     var work;
 
     setImmediate(listen);
 
-    if (err) error(err);
-    else options.client.hgetall(queueName + '#' + workId, gotWork);
+    if (err && ! stopping) error(err);
+    else if (workId) {
+      pending ++;
+      options.client.hgetall(queueName + '#' + workId, gotWork);
+    }
 
     function gotWork(err, _work) {
-      if (err) error(err);
-      else if(_work) {
+      if (err) {
+        pending --;
+        error(err);
+      } else if(_work) {
         work = _work;
         options.client.zadd(queues.timeout, Date.now() + work.timeout, workId, done);
       }
     }
 
     function done(err) {
-      if (err) error(err);
-      else {
-        pending ++;
+      if (err) {
+        pending --;
+        error(err);
+      } else {
         workerFn.call(null, JSON.parse(work.payload), onWorkerFinished);
       }
     }
 
     function onWorkerFinished(err) {
-      pending --;
       if (err) client.repush(work);
-      else dequeue(work.id);
+      else dequeue(work.id, dequeued);
     }
+  }
+
+  function dequeued(err) {
+    pending --;
+    if (err) error(err);
+    listen();
   }
 
 
   /// dequeue
 
-  function dequeue(id) {
+  function dequeue(id, cb) {
     options.client.multi().
-      lrem(queues.stalled, id).
+      lrem(queues.stalled, 1, id).
       del(queueName + '#' + id).
       zrem(queues.timeout, id).
-      exec(errorIfError);
+      exec(cb);
   }
 
 
   /// Stop
 
   function stop(cb) {
-    console.log('stop');
     if (stopping) return cb();
     stopping = true;
-    if (options.client) options.client.quit();
-    if (cb) process.nextTick(cb);
+    options.client.quit();
+    options.client.once('end', ended);
+
+    client.stop();
+    client.once('end', ended);
+
+    var endedCount = 0;
+    function ended() {
+      if (++ endedCount == 2) {
+        self.emit('end');
+        if (cb) cb();
+      }
+    }
   }
 
 
@@ -128,6 +152,7 @@ function createWorker(queueName, workerFn, options) {
   }
 
   function error(err) {
-    self.emit('error', err);
+    if (Array.isArray(err)) err.forEach(error);
+    else self.emit('error', err);
   }
 }
