@@ -87,6 +87,9 @@ function createWorker(queueName, workerFn, options) {
         error(err);
       } else if(_work) {
         work = _work;
+        work.tried = Number(work.tried);
+        work.payload = JSON.parse(work.payload);
+        work.retried = Number(work.retried);
         options.client.zadd(queues.timeout, Date.now() + work.timeout, workId, done);
       }
     }
@@ -96,7 +99,8 @@ function createWorker(queueName, workerFn, options) {
         pending --;
         error(err);
       } else {
-        workerFn.call(null, JSON.parse(work.payload), onWorkerFinished);
+        work.tried ++;
+        workerFn.call(null, work.payload, onWorkerFinished);
       }
     }
 
@@ -104,12 +108,21 @@ function createWorker(queueName, workerFn, options) {
       if (err) {
         self.emit('worker error');
         pending --;
-        client.repush(work);
+        maybeRetry(err, work);
         listen();
       } else {
         self.emit('work done', work);
         dequeue(work.id, dequeued);
       }
+    }
+  }
+
+  function maybeRetry(err, work) {
+    if (work.tried < options.maxRetries) {
+      self.emit('repush', work.payload);
+      client.repush(work);
+    } else {
+      self.emit('max retries', err, work.payload);
     }
   }
 

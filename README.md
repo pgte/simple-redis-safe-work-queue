@@ -31,3 +31,17 @@
 * `emit('listening')`: when listening for work
 * `emit('worker error', err)`: when a worker error occurs
 * `emit('work done', payload)`: when a worker finishes a piece of work
+* `emit('repush', payload)`: when a work unit is being repushed after failure
+* `emit('max retries', lastError, payload)`: when the maximum retries has been reached
+
+# Testing
+
+Clone this repo, enter the repo directory and run:
+
+```bash
+$ npm test
+```
+
+# License
+
+MIT

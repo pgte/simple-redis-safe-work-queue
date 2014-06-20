@@ -75,7 +75,7 @@ function createClient(queueName, options) {
       id: id,
       timeout: pushOptions.timeout || options.defaultTimeout,
       payload: stringify(payload),
-      retried: 0
+      tried: 0
     };
 
     self.emit('before push', work);
@@ -92,7 +92,6 @@ function createClient(queueName, options) {
   ///  Repush
 
   function repush(work, cb) {
-    work.retried ++;
     rawPush(work, cb);
   }
 

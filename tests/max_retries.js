@@ -7,7 +7,7 @@ var client, worker;
 
 var workerOptions = {
   popTimeout: 1,
-  maxRetries: 10
+  maxRetries: 2
 }
 
 var workCount = 10;
@@ -20,29 +20,28 @@ test('create client and push work', function(t) {
   t.end();
 });
 
-test('worker retries failed attempts', function(t) {
+test('worker retries for maxRetries', function(t) {
   worker = Queue.worker(queue, work, workerOptions);
 
-  var failing = true;
   var processed = 0;
 
   function work(payload, cb) {
-    t.equal(++ processed, payload);
-    if (failing) {
-      process.nextTick(function() {
-        cb(new Error('something awful has happened'));
-      });
-    } else process.nextTick(cb);
-
-    if (processed == workCount) {
-      if (failing) {
-        processed = 0;
-        failing = false;
-      } else {
-        t.end();
-      }
-    }
+    processed ++;
+    process.nextTick(function() {
+      cb(new Error('something awful has happened'));
+    });
   }
+
+  var maxRetries = 0;
+  worker.on('max retries', function(err, payload) {
+    t.equal(++ maxRetries, payload);
+  });
+
+  setTimeout(function() {
+    t.equal(maxRetries, workCount);
+    t.equal(processed, workerOptions.maxRetries * workCount);
+    t.end();
+  }, 2000);
 
 });
 
