@@ -13,12 +13,13 @@ function createClient(queueName, options) {
 
   options = extend({}, defaultClientOptions, options || {});
 
-  queueName = queueName + '-pending';
-  timeoutName = queueName + '-timeouts';
-
+  var queues = {
+    pending: queueName + '-pending'
+  }
   init();
 
   self.push = push;
+  self.repush = repush;
 
   return self;
 
@@ -29,39 +30,66 @@ function createClient(queueName, options) {
     if (! options.client) {
       options.client = Redis.createClient(options.port, options.host, options.redisOptions);
       if (options.password) options.auth(options.password);
+      options.client.once('ready', onReady);
+    }
+  }
+
+  function onReady() {
+    self.emit('ready');
+  }
+
+
+  /// Raw Push
+
+  function rawPush(work, cb) {
+    options.client.multi().
+      hmset(queueName + '#' + work.id, work).
+      lpush(queues.pending, work.id).
+      exec(done);
+
+    function done(err) {
+      if (err) {
+        if (cb) cb(err);
+        else self.emit('error', err);
+      } else if (cb) cb();
     }
   }
 
 
   /// Push
 
-  function push(work, options, cb) {
-    if (! work.id) work.id = uuid();
-    if (arguments.length == 2 && (typeof options) == 'function') {
-      cb = options;
+  function push(payload, pushOptions, cb) {
+    var id = uuid();
+    if (arguments.length == 2 && (typeof pushOptions) == 'function') {
+      cb = pushOptions;
       options = {};
     }
 
-    if (! options) options = {};
+    if (! pushOptions) pushOptions = {};
 
-    var timeout = Date.now() + (options.timeout || defaultTimeout);
+    var work = {
+      id: id,
+      timeout: options.timeout || pushOptions.defaultTimeout,
+      payload: stringify(payload),
+      retried: 0
+    };
 
     self.emit('before push', work);
 
-    options.client.multi()
-      .zadd(timeoutName, timeout, work.id)
-      .lpush(queueName, stringify(work))
-      .exec(done);
+    rawPush(work, pushed);
 
-    function done(err) {
-      if (err) {
-        if (cb) cb(err);
-        else self.emit('error', err);
-      } else {
-        self.emit('after push', work);
-        if (cb) cb();
-      }
+    function pushed(err) {
+      if (! err) self.emit('after push', work);
+      if (cb) cb(err);
     }
+  }
+
+
+  ///  Repush
+
+  function repush(work, cb) {
+    work.retried ++;
+    rawPush(work, cb);
   }
 
 }

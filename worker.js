@@ -1,5 +1,7 @@
 var defaultWorkerOptions = require('./default_worker_options');
 var EventEmitter = require('events').EventEmitter;
+var scripts = require('./scripts');
+var Client = require('./client');
 var extend = require('xtend');
 var Redis = require('redis');
 
@@ -11,9 +13,11 @@ function createWorker(queueName, workerFn, options) {
 
   options = extend({}, defaultWorkerOptions, options || {});
 
-  queues = {
+  var client = Client(queueName, options);
+
+  var queues = {
     pending: queueName + '-pending',
-    working: queueName + '-working'
+    timeout: queueName + '-timeout'
   };
 
   /// state vars
@@ -44,68 +48,55 @@ function createWorker(queueName, workerFn, options) {
   function onReady() {
     self.emit('ready');
 
-    /// push every message on dataunits-dead to dataunits
-    client.lrange(queueName + '-dead', 0, -1, function(err, workUnits) {
-      if (err) return cb(err);
-
-      async.each(workUnits, function(workUnit, cb) {
-        client.lpush(queueName, workUnit, cb);
-      }, done);
-    });
-
-    function done(err) {
-      if (err) self.error(err);
-      else onRestored();
-    }
-  }
-
-  function onRestored() {
-    self.emit('restored');
     listen();
   }
 
   function listen() {
     if (! stopping && ! listening && pending < options.maxConcurrency) {
+
       self.emit('listening');
       listening = true;
-      options.client.brpoplpush(queues.pending, queues.working, options.popTimeout, onPop);
+
+      scripts.run.call(
+        options.client,
+        'pop', // script
+        3, // 3 keys
+        queueName, queues.pending, queues.timeout, // keys
+        Date.now(), // arg[0]
+        onPop
+      );
     }
   }
 
-  function onPop(err, dataunit) {
+  function onPop(err, work) {
     listening = false;
+
+    setImmediate(listen);
+
     if (err) error(err);
-    if (dataunit) {
+
+    if (work) {
       pending ++;
+      workerFn.call(null, JSON.parse(work.payload), onWorkerFinished);
+    }
 
-      setImmediate(listen);
-
-      dataunit = JSON.parse(dataunit);
-      var taskId = dataunit.t || dataunit.taskId;
-      var blob = 'b' in dataunit ? dataunit.b : dataunit.blob;
-
-      try {
-
-        assert(taskId, 'need task id');
-        assert(blob != undefined, 'need blob');
-
-      } catch(err) {
-        return loopError(err, dataunit);
-      }
-
-      backend.dataunits.create(taskId, blob, onDataunitCreated);
-
-      function onDataunitCreated(err, dataunit) {
-        if (err) {
-          loopError(err, dataunit);
-        } else {
-          /// Remove from the dataunits-dead queue
-          client.rpop('dataunits-dead', onDataunitsDeadPop);
-        }
-      }
-
+    function onWorkerFinished(err) {
+      pending --;
+      if (err) client.repush(work);
+      else dequeue(work.id);
     }
   }
+
+
+  /// deqeue
+
+  function dequeue(id) {
+    options.client.multi().
+      del(queueName + '#' + id).
+      zrem(queues.timeout, id).
+      exec(errorIfError);
+  }
+
 
   /// Stop
 
@@ -114,6 +105,17 @@ function createWorker(queueName, workerFn, options) {
     stopping = true;
     if (options.client) options.client.quit();
     if (cb) process.nextTick(cb);
-  };
+  }
+
+
+  /// Misc
+
+  function errorIfError(err) {
+    if (err) error(err);
+  }
+
+  function error(err) {
+    self.emit('error', err);
+  }
 }
 
