@@ -24,11 +24,12 @@ exports.run = function() {
 
   if (Array.isArray(args[0])) args = args[0];
 
-  var script = args[0];
+  var scriptName = args[0];
   var sha = exports.shas[scriptName];
 
   if (! sha) callback(new Error('no such script: ' + scriptName));
 
+  args[0] = sha;
   self.evalsha(args, evalShaReplied);
 
   function evalShaReplied(err, reply) {

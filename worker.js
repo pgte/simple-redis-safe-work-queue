@@ -9,6 +9,9 @@ module.exports = createWorker;
 
 function createWorker(queueName, workerFn, options) {
 
+  // PENDING: recover stalled queue
+  // PENDING: process timeouts
+
   var self = new EventEmitter();
 
   options = extend({}, defaultWorkerOptions, options || {});
@@ -17,7 +20,8 @@ function createWorker(queueName, workerFn, options) {
 
   var queues = {
     pending: queueName + '-pending',
-    timeout: queueName + '-timeout'
+    timeout: queueName + '-timeout',
+    stalled: queueName + '-stalled',
   };
 
   /// state vars
@@ -57,27 +61,34 @@ function createWorker(queueName, workerFn, options) {
       self.emit('listening');
       listening = true;
 
-      scripts.run.call(
-        options.client,
-        'pop', // script
-        3, // 3 keys
-        queueName, queues.pending, queues.timeout, // keys
-        Date.now(), // arg[0]
-        onPop
-      );
+      options.client.brpoplpush(queues.pending, queues.stalled, options.popTimeout / 1e3, onPop);
     }
   }
 
-  function onPop(err, work) {
+  function onPop(err, workId) {
+    console.log('popped:', workId);
     listening = false;
+    var work;
 
     setImmediate(listen);
 
     if (err) error(err);
+    else options.client.hgetall(queueName + '#' + workId, gotWork);
 
-    if (work) {
-      pending ++;
-      workerFn.call(null, JSON.parse(work.payload), onWorkerFinished);
+    function gotWork(err, _work) {
+      if (err) error(err);
+      else if(_work) {
+        work = _work;
+        options.client.zadd(queues.timeout, Date.now() + work.timeout, workId, done);
+      }
+    }
+
+    function done(err) {
+      if (err) error(err);
+      else {
+        pending ++;
+        workerFn.call(null, JSON.parse(work.payload), onWorkerFinished);
+      }
     }
 
     function onWorkerFinished(err) {
@@ -88,10 +99,11 @@ function createWorker(queueName, workerFn, options) {
   }
 
 
-  /// deqeue
+  /// dequeue
 
   function dequeue(id) {
     options.client.multi().
+      lrem(queues.stalled, id).
       del(queueName + '#' + id).
       zrem(queues.timeout, id).
       exec(errorIfError);
@@ -101,6 +113,7 @@ function createWorker(queueName, workerFn, options) {
   /// Stop
 
   function stop(cb) {
+    console.log('stop');
     if (stopping) return cb();
     stopping = true;
     if (options.client) options.client.quit();
@@ -118,4 +131,3 @@ function createWorker(queueName, workerFn, options) {
     self.emit('error', err);
   }
 }
-

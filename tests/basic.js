@@ -1,10 +1,12 @@
+var uuid = require('node-uuid').v4;
 var test = require('tap').test;
 var Queue = require('../')
 
-var client;
+var queue = uuid();
+var client, worker;
 
 test('create client', function(t) {
-  client = Queue.createClient();
+  client = Queue.client(queue);
   client.once('ready', t.end.bind(t));
 });
 
@@ -23,6 +25,30 @@ test('push work with callback', function(t) {
 
 });
 
-// test('create worker', function() {
+test('creates worker that gets work', function(t) {
+  worker = Queue.worker(queue, work);
 
-// });
+  var times = 0;
+  var payloads = [];
+
+  function work(payload, cb) {
+    payloads.push(payload);
+    if (++ times == 2) setTimeout(finished, 500);
+  }
+
+  function finished() {
+    t.deepEqual(payloads, [{a:1, b:2}, {c:3, d:4}]);
+    t.end();
+  }
+
+});
+
+test('stop client', function(t) {
+  client.stop();
+  t.end();
+});
+
+test('stop worker', function(t) {
+  worker.stop();
+  t.end();
+});

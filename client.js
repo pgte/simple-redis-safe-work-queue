@@ -20,6 +20,7 @@ function createClient(queueName, options) {
 
   self.push = push;
   self.repush = repush;
+  self.stop = stop;
 
   return self;
 
@@ -62,14 +63,14 @@ function createClient(queueName, options) {
     var id = uuid();
     if (arguments.length == 2 && (typeof pushOptions) == 'function') {
       cb = pushOptions;
-      options = {};
+      pushOptions = {};
     }
 
     if (! pushOptions) pushOptions = {};
 
     var work = {
       id: id,
-      timeout: options.timeout || pushOptions.defaultTimeout,
+      timeout: pushOptions.timeout || options.defaultTimeout,
       payload: stringify(payload),
       retried: 0
     };
@@ -90,6 +91,13 @@ function createClient(queueName, options) {
   function repush(work, cb) {
     work.retried ++;
     rawPush(work, cb);
+  }
+
+
+  /// Stop
+
+  function stop() {
+    options.client.quit();
   }
 
 }
