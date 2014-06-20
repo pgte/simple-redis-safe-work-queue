@@ -129,6 +129,7 @@ function createWorker(queueName, workerFn, options) {
       self.emit('repush', work.payload);
       client.repush(work);
     } else {
+      dequeue(work.id, errorIfError);
       self.emit('max retries', err, work.payload);
     }
   }

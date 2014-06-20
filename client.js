@@ -14,7 +14,8 @@ function createClient(queueName, options) {
   options = extend({}, defaultClientOptions, options || {});
 
   var queues = {
-    pending: queueName + '-pending'
+    pending: queueName + '-pending',
+    stalled: queueName + '-stalled'
   }
 
   var stopping = false;
@@ -52,6 +53,7 @@ function createClient(queueName, options) {
     options.client.multi().
       hmset(queueName + '#' + work.id, work).
       lpush(queues.pending, work.id).
+      lrem(queues.stalled, 1, work.id).
       exec(done);
 
     function done(err) {
