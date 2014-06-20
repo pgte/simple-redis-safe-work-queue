@@ -15,7 +15,8 @@ function createClient(queueName, options) {
 
   var queues = {
     pending: queueName + '-pending',
-    stalled: queueName + '-stalled'
+    stalled: queueName + '-stalled',
+    timeout: queueName + '-stalled'
   }
 
   var stopping = false;
@@ -39,6 +40,7 @@ function createClient(queueName, options) {
     } else {
       self.emit('ready');
     }
+    options.client.on('error', error);
     self.client = options.client;
   }
 
@@ -52,8 +54,9 @@ function createClient(queueName, options) {
   function rawPush(work, cb) {
     options.client.multi().
       hmset(queueName + '#' + work.id, work).
+      lrem(queues.pending, 1, work.id).
       lpush(queues.pending, work.id).
-      lrem(queues.stalled, 1, work.id).
+      zrem(queues.timeout, work.id).
       exec(done);
 
     function done(err) {
@@ -113,5 +116,11 @@ function createClient(queueName, options) {
     });
   }
 
-}
 
+  /// Error
+
+  function error(err) {
+    if (err) self.emit('error', err);
+  }
+
+}

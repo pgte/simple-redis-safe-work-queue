@@ -53,7 +53,10 @@ function createWorker(queueName, workerFn, options) {
       readies ++;
     }
 
+    options.client.on('error', error);
+
     client = Client(queueName, options);
+    client.on('error', error);
     client.once('ready', onReady);
 
     listen();
@@ -97,7 +100,10 @@ function createWorker(queueName, workerFn, options) {
         work.tried = Number(work.tried);
         work.payload = JSON.parse(work.payload);
         work.retried = Number(work.retried);
-        client.client.zadd(queues.timeout, Date.now() + work.timeout, workId, done);
+        client.client.multi().
+          zadd(queues.timeout, Date.now() + work.timeout, workId).
+          lrem(queues.stalled, 1, workId).
+          exec(done);
       }
     }
 

@@ -12,7 +12,7 @@ var workerOptions = {
 
 var timeout = 100;
 var workCount = 20;
-var dueTime = (workCount + 1) * timeout;
+var dueTime = (workCount + 2) * timeout;
 
 
 test('create client and push work', function(t) {

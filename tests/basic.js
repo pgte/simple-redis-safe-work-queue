@@ -37,6 +37,7 @@ test('creates worker that gets work', function(t) {
 
   function work(payload, cb) {
     payloads.push(payload);
+    cb();
     if (++ times == 2) setTimeout(finished, 500);
   }
 
