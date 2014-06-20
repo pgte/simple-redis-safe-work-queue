@@ -35,7 +35,10 @@ function createClient(queueName, options) {
       options.client = Redis.createClient(options.port, options.host, options.redisOptions);
       if (options.password) options.auth(options.password);
       options.client.once('ready', onReady);
+    } else {
+      self.emit('ready');
     }
+    self.client = options.client;
   }
 
   function onReady() {

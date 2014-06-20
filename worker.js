@@ -21,7 +21,8 @@ function createWorker(queueName, workerFn, options) {
 
   options = extend({}, defaultWorkerOptions, options || {});
 
-  var client = Client(queueName, options);
+  var client;
+  var readies = 0;
 
   var queues = {
     pending: queueName + '-pending',
@@ -48,16 +49,22 @@ function createWorker(queueName, workerFn, options) {
       options.client = Redis.createClient(options.port, options.host, options.redisOptions);
       if (options.password) options.auth(options.password);
       options.client.once('ready', onReady);
-    } else onReady();
+    } else {
+      readies ++;
+    }
 
+    client = Client(queueName, options);
+    client.once('ready', onReady);
 
     listen();
   }
 
   function onReady() {
-    self.emit('ready');
+    if (++ readies == 2) {
+      self.emit('ready');
 
-    listen();
+      listen();
+    }
   }
 
   function listen() {
@@ -78,7 +85,7 @@ function createWorker(queueName, workerFn, options) {
     if (err && ! stopping) error(err);
     else if (workId) {
       pending ++;
-      options.client.hgetall(queueName + '#' + workId, gotWork);
+      client.client.hgetall(queueName + '#' + workId, gotWork);
     }
 
     function gotWork(err, _work) {
@@ -90,7 +97,7 @@ function createWorker(queueName, workerFn, options) {
         work.tried = Number(work.tried);
         work.payload = JSON.parse(work.payload);
         work.retried = Number(work.retried);
-        options.client.zadd(queues.timeout, Date.now() + work.timeout, workId, done);
+        client.client.zadd(queues.timeout, Date.now() + work.timeout, workId, done);
       }
     }
 
@@ -136,7 +143,7 @@ function createWorker(queueName, workerFn, options) {
   /// dequeue
 
   function dequeue(id, cb) {
-    options.client.multi().
+    client.client.multi().
       lrem(queues.stalled, 1, id).
       del(queueName + '#' + id).
       zrem(queues.timeout, id).
