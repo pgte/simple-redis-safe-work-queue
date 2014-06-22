@@ -1,4 +1,5 @@
 var defaultWorkerOptions = require('./default_worker_options');
+var TimeoutWatchdog = require('./timeout_watchdog');
 var EventEmitter = require('events').EventEmitter;
 var Client = require('./client');
 var extend = require('xtend');
@@ -22,6 +23,17 @@ function createWorker(queueName, workerFn, options) {
   options = extend({}, defaultWorkerOptions, options || {});
 
   var client;
+
+  // watchdogs
+  var watchdogs = {
+    timeout: TimeoutWatchdog(queueName, options)
+  };
+  watchdogs.timeout.on('error', error);
+  watchdogs.timeout.on('timeout requeued', function(item) {
+    self.emit('timeout requeued', item);
+  });
+
+
   var readies = 0;
 
   var queues = {
@@ -35,9 +47,9 @@ function createWorker(queueName, workerFn, options) {
   var stopping = false;
   var pending = 0;
 
-  process.nextTick(init);
-
   self.stop = stop;
+
+  init();
 
   return self;
 
@@ -166,12 +178,12 @@ function createWorker(queueName, workerFn, options) {
     options.client.quit();
     options.client.once('end', ended);
 
-    client.stop();
-    client.once('end', ended);
+    client.stop(ended);
+    watchdogs.timeout.stop(ended);
 
     var endedCount = 0;
     function ended() {
-      if (++ endedCount == 2) {
+      if (++ endedCount == 3) {
         self.emit('end');
         if (cb) cb();
       }
