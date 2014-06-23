@@ -3,7 +3,7 @@ local pendingQueue = ARGV[2]
 local stalledQueue = ARGV[3]
 local now = tonumber(ARGV[4])
 
-local items = redis.call('zrevrange', timeoutQueue, now, now * 2);
+local items = redis.call('zrangebyscore', timeoutQueue, 0, now);
 
 for i, workId in ipairs(items) do
   redis.call('lpush', pendingQueue, workId)

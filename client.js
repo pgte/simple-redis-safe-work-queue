@@ -16,7 +16,7 @@ function createClient(queueName, options) {
   var queues = {
     pending: queueName + '-pending',
     stalled: queueName + '-stalled',
-    timeout: queueName + '-stalled'
+    timeout: queueName + '-timeout'
   }
 
   var stopping = false;

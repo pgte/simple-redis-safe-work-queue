@@ -62,9 +62,7 @@ function createWatchdog(queueName, options) {
 
     setTimeout(poll, options.pollInterval);
 
-    console.log('requeued items %j', items);
-
-    if (items) {
+    if (items && items.length) {
       items.forEach(function(item) {
         self.emit('timeout requeued', item);
       });

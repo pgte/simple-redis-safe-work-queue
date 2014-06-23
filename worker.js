@@ -110,8 +110,10 @@ function createWorker(queueName, workerFn, options) {
       } else if(_work) {
         work = _work;
         work.tried = Number(work.tried);
-        work.payload = JSON.parse(work.payload);
         work.retried = Number(work.retried);
+        work.timeout = Number(work.timeout);
+        work.payload = JSON.parse(work.payload);
+
         client.client.multi().
           zadd(queues.timeout, Date.now() + work.timeout, workId).
           lrem(queues.stalled, 1, workId).
