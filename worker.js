@@ -74,8 +74,6 @@ function createWorker(queueName, workerFn, options) {
     client = Client(queueName, options);
     client.on('error', error);
     client.once('ready', onReady);
-
-    listen();
   }
 
   function onReady() {
