@@ -10,9 +10,6 @@ module.exports = createWorker;
 
 function createWorker(queueName, workerFn, options) {
 
-  // PENDING: recover stalled queue
-  // PENDING: process timeouts
-
   var self = new EventEmitter();
 
   if (typeof options == 'number') {
