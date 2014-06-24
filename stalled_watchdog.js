@@ -7,9 +7,8 @@ var Redis = require('redis');
 module.exports = createWatchdog;
 
 function createWatchdog(queueName, options) {
-
-  console.log('timeout watchdog');
-  console.trace();
+  // PENDING: recover stalled queue
+  // PENDING: process timeouts
 
   var self = new EventEmitter();
 
@@ -20,6 +19,8 @@ function createWatchdog(queueName, options) {
     timeout: queueName + '-timeout',
     stalled: queueName + '-stalled',
   };
+
+  var workIds = [];
 
   /// state vars
   var listening = false;
@@ -52,25 +53,39 @@ function createWatchdog(queueName, options) {
       listening = true;
       self.emit('polling');
 
-      scripts.run.call(options.client, 'timeout', 1,
-        queueName,
-        queues.timeout, queues.pending, queues.stalled, Date.now(),
-        done);
+      options.client.lrange(queues.stalled, 0, -1, maybeStalled);
     }
   }
 
-  function done(err, items) {
+  function maybeStalled(err, maybeStalled) {
     listening = false;
 
     setTimeout(poll, options.pollInterval);
 
-    if (items && items.length) {
-      items.forEach(function(item) {
-        self.emit('timeout requeued', item);
+    if (err) self.emit('error', err);
+
+    console.log('maybe stalled:', maybeStalled);
+
+    if (maybeStalled && maybeStalled.length) {
+      maybeStalled.forEach(function(workId) {
+        setTimeout(checkIfStalled(workId), options.stalledTimeout);
       });
     }
 
-    if (err) self.emit('error', err);
+  }
+
+  function checkIfStalled(workId) {
+    return function() {
+      scripts.run.call(options.client, 'stalled', 1,
+        queueName,
+        queues.timeout, queues.pending, queues.stalled, Date.now(), workId,
+        done);
+    }
+  }
+
+  function done(err, workId) {
+    console.log('definitely stalled:', workId);
+    self.emit('stalled requeued', workId);
   }
 
 

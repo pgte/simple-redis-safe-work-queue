@@ -1,5 +1,6 @@
 var defaultWorkerOptions = require('./default_worker_options');
 var TimeoutWatchdog = require('./timeout_watchdog');
+var StalledWatchdog = require('./stalled_watchdog');
 var EventEmitter = require('events').EventEmitter;
 var Client = require('./client');
 var extend = require('xtend');
@@ -22,17 +23,26 @@ function createWorker(queueName, workerFn, options) {
 
   options = extend({}, defaultWorkerOptions, options || {});
 
+  console.log(options);
+
   var client;
 
   // watchdogs
-  var watchdogs = {
-    timeout: TimeoutWatchdog(queueName, options)
-  };
-  watchdogs.timeout.on('error', error);
-  watchdogs.timeout.on('timeout requeued', function(item) {
-    self.emit('timeout requeued', item);
-  });
-
+  var watchdogs = {};
+  if (options.runTimeoutWatchdog) {
+    watchdogs.timeout = TimeoutWatchdog(queueName, options);
+    watchdogs.timeout.on('error', error);
+    watchdogs.timeout.on('timeout requeued', function(item) {
+      self.emit('timeout requeued', item);
+    });
+  }
+  if (options.runStalledWatchdog) {
+    watchdogs.stalled = StalledWatchdog(queueName, options);
+    watchdogs.stalled.on('error', error);
+    watchdogs.stalled.on('stalled requeued', function(item) {
+      self.emit('stalled requeued', item);
+    });
+  }
 
   var readies = 0;
 
@@ -98,7 +108,7 @@ function createWorker(queueName, workerFn, options) {
     setImmediate(listen);
 
     if (err && ! stopping) error(err);
-    else if (workId) {
+    else if (workId && ! options.stall) {
       pending ++;
       client.client.hgetall(queueName + '#' + workId, gotWork);
     }
@@ -115,8 +125,11 @@ function createWorker(queueName, workerFn, options) {
         work.payload = JSON.parse(work.payload);
 
         client.client.multi().
+          echo('working on ' + workId + ' <<<<<<<<<<<<<').
+          zrem(queues.timeout, workId).
           zadd(queues.timeout, Date.now() + work.timeout, workId).
           lrem(queues.stalled, 1, workId).
+          echo('>>>>>>>>>>>>>>').
           exec(done);
       }
     }
@@ -165,7 +178,6 @@ function createWorker(queueName, workerFn, options) {
 
   function dequeue(id, cb) {
     client.client.multi().
-      lrem(queues.stalled, 1, id).
       del(queueName + '#' + id).
       zrem(queues.timeout, id).
       exec(cb);
@@ -175,17 +187,26 @@ function createWorker(queueName, workerFn, options) {
   /// Stop
 
   function stop(cb) {
-    if (stopping) return cb();
+    if (stopping) {
+      if (cb) cb();
+      return;
+    }
+
     stopping = true;
     options.client.quit();
-    options.client.once('end', ended);
+    options.client.once('end', stopped);
+    client.stop(stopped);
+    var waitingFor = 2;
 
-    client.stop(ended);
-    watchdogs.timeout.stop(ended);
+    var roles = Object.keys(watchdogs);
+    waitingFor += roles.length;
+    roles.forEach(function(role) {
+      watchdogs[role].stop(stopped);
+    });
 
     var endedCount = 0;
-    function ended() {
-      if (++ endedCount == 3) {
+    function stopped() {
+      if (++ endedCount == waitingFor) {
         self.emit('end');
         if (cb) cb();
       }

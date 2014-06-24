@@ -4,7 +4,7 @@ var crypto = require('crypto');
 exports.scripts = {};
 exports.shas = {};
 
-['timeout'].forEach(load);
+['timeout', 'stalled'].forEach(load);
 
 function load(scriptName) {
   var script =

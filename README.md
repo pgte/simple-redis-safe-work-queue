@@ -24,6 +24,8 @@
 * client: a redis client instance (optional, if you want to create / reuse your own client)
 * maxConcurrency: the maximum pending work units. defaults to 10.
 * popTimeout: the worker pop timeout, after which it retries, in seconds. Defaults to 3 seconds.
+* runTimeoutWatchdog: run a timeout watchdog, defaults to `true`
+* runStalledWatchdog: run a stalled watchdog, defaults to `true`
 
 ## Worker Events:
 

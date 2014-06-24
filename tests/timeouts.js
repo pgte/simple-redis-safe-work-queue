@@ -6,7 +6,7 @@ var queue = uuid();
 var client, worker;
 
 var clientOptions = {
-  defaultTimeout: 1000
+  defaultTimeout: 2000
 };
 
 var workerOptions = {
@@ -16,11 +16,14 @@ var workerOptions = {
 }
 
 var workCount = 10;
+var workItems = [];
 
 test('create client and push work', function(t) {
   client = Queue.client(queue, clientOptions);
   for(var i = 0 ; i < workCount; i ++) {
-    client.push(i + 1);
+    var payload = i + 1;
+    client.push(payload);
+    workItems.push(payload);
   }
   t.end();
 });
@@ -38,6 +41,7 @@ test('timeout kicks in', function(t) {
     if (! seen[payload]) {
       seen[payload] = true;
     } else {
+      console.log('working on ', payload);
       processed.push(payload);
       cb();
     }
@@ -45,14 +49,15 @@ test('timeout kicks in', function(t) {
 
   var requeued = [];
   worker.on('timeout requeued', function(workId) {
+    console.log('requeued', workId);
     requeued.push(workId);
   });
 
   setTimeout(function() {
-    t.equals(requeued.length, 10);
-    t.deepEquals(processed.sort(sortNumber), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    t.equals(requeued.length, workCount);
+    t.deepEquals(processed.sort(sortNumber), workItems);
     t.end();
-  }, 4000);
+  }, 6000);
 
 });
 
