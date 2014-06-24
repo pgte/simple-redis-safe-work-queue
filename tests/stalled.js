@@ -8,14 +8,13 @@ var client, stallingWorker, worker;
 var stallingWorkerOptions = {
   popTimeout: 1,
   stall: true,
-  runTimeoutWatchdog: false,
-  stalledTimeout: 1e3
+  stalledTimeout: 1e3,
+  pollInterval: 1e3
 }
 
 var workerOptions = {
   popTimeout: 1,
-  maxConcurrency: Infinity,
-  runTimeoutWatchdog: false
+  maxConcurrency: Infinity
 }
 
 var workCount = 10;
@@ -37,13 +36,8 @@ test('run a stalling worker', function(t) {
   var requeued = [];
 
   stallingWorker.on('stalled requeued', function(workId) {
-    console.log('requeued', workId);
     requeued.push(workId);
-    if (requeued.length == workCount)
-      stallingWorker.stop(function() {
-        console.log('stalling worker ended');
-        t.end();
-      });
+    if (requeued.length == workCount) stallingWorker.stop(t.end.bind(t));
   });
 });
 
@@ -53,7 +47,6 @@ test('stall detection kicks in', function(t) {
 
   var seen = [];
   function work(payload, cb) {
-    console.log('work', payload);
     seen.push(payload);
     cb();
   }

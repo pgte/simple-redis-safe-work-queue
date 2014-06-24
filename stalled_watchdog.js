@@ -36,11 +36,9 @@ function createWatchdog(queueName, options) {
   /// Init
 
   function init() {
-    if (! options.client) {
-      options.client = Redis.createClient(options.port, options.host, options.redisOptions);
-      if (options.password) options.auth(options.password);
-      options.client.once('ready', onReady);
-    } else onReady();
+    options.client = Redis.createClient(options.port, options.host, options.redisOptions);
+    if (options.password) options.auth(options.password);
+    options.client.once('ready', onReady);
   }
 
   function onReady() {
@@ -64,8 +62,6 @@ function createWatchdog(queueName, options) {
 
     if (err) self.emit('error', err);
 
-    console.log('maybe stalled:', maybeStalled);
-
     if (maybeStalled && maybeStalled.length) {
       maybeStalled.forEach(function(workId) {
         setTimeout(checkIfStalled(workId), options.stalledTimeout);
@@ -78,14 +74,15 @@ function createWatchdog(queueName, options) {
     return function() {
       scripts.run.call(options.client, 'stalled', 1,
         queueName,
-        queues.timeout, queues.pending, queues.stalled, Date.now(), workId,
+        queues.timeout, queues.pending, queues.stalled, Date.now(),
+        options.stalledTimeout, workId,
         done);
     }
   }
 
   function done(err, workId) {
-    console.log('definitely stalled:', workId);
-    self.emit('stalled requeued', workId);
+    if (err) self.emit('error', err);
+    if (workId) self.emit('stalled requeued', workId);
   }
 
 

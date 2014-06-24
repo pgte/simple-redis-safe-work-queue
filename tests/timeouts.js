@@ -41,7 +41,6 @@ test('timeout kicks in', function(t) {
     if (! seen[payload]) {
       seen[payload] = true;
     } else {
-      console.log('working on ', payload);
       processed.push(payload);
       cb();
     }
@@ -49,7 +48,6 @@ test('timeout kicks in', function(t) {
 
   var requeued = [];
   worker.on('timeout requeued', function(workId) {
-    console.log('requeued', workId);
     requeued.push(workId);
   });
 

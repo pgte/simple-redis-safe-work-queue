@@ -23,8 +23,6 @@ function createWorker(queueName, workerFn, options) {
 
   options = extend({}, defaultWorkerOptions, options || {});
 
-  console.log(options);
-
   var client;
 
   // watchdogs
@@ -67,13 +65,9 @@ function createWorker(queueName, workerFn, options) {
   /// Init
 
   function init() {
-    if (! options.client) {
-      options.client = Redis.createClient(options.port, options.host, options.redisOptions);
-      if (options.password) options.auth(options.password);
-      options.client.once('ready', onReady);
-    } else {
-      readies ++;
-    }
+    options.client = Redis.createClient(options.port, options.host, options.redisOptions);
+    if (options.password) options.auth(options.password);
+    options.client.once('ready', onReady);
 
     options.client.on('error', error);
 
