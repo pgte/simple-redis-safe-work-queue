@@ -30,8 +30,10 @@ client.push({to: 'someone@somewhere.com', subject: 'hey there', body: 'yo'}, fun
 
 Client also accepts options as second argument in constructor:
 
-* port: 6379
-* host: "127.0.0.1"
+* port: redis port, defaults to 6379
+* host: redis host name, defaults to "127.0.0.1"
+* password: redis password, defaults to `undefined`
+* redisOptions: additional [redis options](https://github.com/mranney/node_redis#readme), defaults to `undefined`
 * defaultTimeout: the default worker timeout, in miliseconds. defaults to 60000 (60 seconds)
 
 ## Client events:
@@ -70,7 +72,7 @@ You can pass some options on the third argument of the worker constructor:
 * port: redis port (defaults to 6379)
 * host: redis host (defaults to "127.0.0.1")
 * password: redis password
-* redisOptions: any option allowed by the [redis client](https://github.com/mranney/node_redis)
+* redisOptions: any option allowed by the [redis client](https://github.com/mranney/node_redis), defaults to `undefined`
 * maxConcurrency: the maximum pending work units. defaults to 10.
 * popTimeout: the worker pop timeout, after which it retries, in seconds. Defaults to 3 seconds.
 * runTimeoutWatchdog: run a timeout watchdog, defaults to `true`
