@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/pgte/simple-redis-safe-work-queue.svg)](https://travis-ci.org/pgte/simple-redis-safe-work-queue)
 
+[![Gitter chat](https://badges.gitter.im/pgte/simple-redis-safe-work-queue.png)](https://gitter.im/pgte/simple-redis-safe-work-queue)
+
 A work queue for Node.js producers and consumers that uses Redis.
 
 
