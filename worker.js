@@ -117,11 +117,9 @@ function createWorker(queueName, workerFn, options) {
         work.payload = JSON.parse(work.payload);
 
         client.client.multi().
-          echo('working on ' + workId + ' <<<<<<<<<<<<<').
           zrem(queues.timeout, workId).
           zadd(queues.timeout, Date.now() + work.timeout, workId).
           lrem(queues.stalled, 1, workId).
-          echo('>>>>>>>>>>>>>>').
           exec(done);
       }
     }
