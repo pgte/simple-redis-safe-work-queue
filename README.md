@@ -1,5 +1,7 @@
 # Client
 
+[![Build Status](https://travis-ci.org/pgte/simple-redis-safe-work-queue.svg)](https://travis-ci.org/pgte/simple-redis-safe-work-queue)
+
 ## Client options:
 
 Example of a client producing work:
