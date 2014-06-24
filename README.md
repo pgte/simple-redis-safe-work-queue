@@ -1,6 +1,12 @@
-# Client
+# simple-redis-safe-work-queue
 
 [![Build Status](https://travis-ci.org/pgte/simple-redis-safe-work-queue.svg)](https://travis-ci.org/pgte/simple-redis-safe-work-queue)
+
+A work queue for Node.js producers and consumers that uses Redis.
+
+
+# Client
+
 
 ## Client options:
 
@@ -79,6 +85,10 @@ A worker emits the following events:
 * `emit('work done', payload)`: when a worker finishes a piece of work
 * `emit('repush', payload)`: when a work unit is being repushed after failure
 * `emit('max retries', lastError, payload)`: when the maximum retries has been reached
+
+# Requirements
+
+Redis 2.6 or greater, with Lua scripting enabled.
 
 # Testing
 

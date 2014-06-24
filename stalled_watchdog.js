@@ -104,7 +104,7 @@ function createWatchdog(queueName, options) {
   /// Misc
 
   function errorIfError(err) {
-    if (err) error(err);
+    if (err && ! stopping) error(err);
   }
 
   function error(err) {

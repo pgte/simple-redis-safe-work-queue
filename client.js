@@ -117,7 +117,7 @@ function createClient(queueName, options) {
   /// Error
 
   function error(err) {
-    if (err) self.emit('error', err);
+    if (err && ! stopping) self.emit('error', err);
   }
 
 }
