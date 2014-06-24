@@ -2,6 +2,7 @@ var defaultWorkerOptions = require('./default_worker_options');
 var TimeoutWatchdog = require('./timeout_watchdog');
 var StalledWatchdog = require('./stalled_watchdog');
 var EventEmitter = require('events').EventEmitter;
+var stringify = require('json-stringify-safe');
 var Client = require('./client');
 var extend = require('xtend');
 var Redis = require('redis');
@@ -109,7 +110,6 @@ function createWorker(queueName, workerFn, options) {
       } else if(_work) {
         work = _work;
         work.tried = Number(work.tried);
-        work.retried = Number(work.retried);
         work.timeout = Number(work.timeout);
         work.payload = JSON.parse(work.payload);
 
@@ -147,6 +147,7 @@ function createWorker(queueName, workerFn, options) {
   function maybeRetry(err, work) {
     if (work.tried < options.maxRetries) {
       self.emit('repush', work.payload);
+      work.payload = stringify(work.payload);
       client.repush(work);
     } else {
       dequeue(work.id, errorIfError);
