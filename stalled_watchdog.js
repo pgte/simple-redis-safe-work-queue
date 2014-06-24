@@ -7,8 +7,6 @@ var Redis = require('redis');
 module.exports = createWatchdog;
 
 function createWatchdog(queueName, options) {
-  // PENDING: recover stalled queue
-  // PENDING: process timeouts
 
   var self = new EventEmitter();
 
@@ -19,8 +17,6 @@ function createWatchdog(queueName, options) {
     timeout: queueName + '-timeout',
     stalled: queueName + '-stalled',
   };
-
-  var workIds = [];
 
   /// state vars
   var listening = false;
