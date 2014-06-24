@@ -8,8 +8,6 @@ A work queue for Node.js producers and consumers that uses Redis.
 # Client
 
 
-## Client options:
-
 Example of a client producing work:
 
 ```javascript
@@ -26,6 +24,9 @@ client.push({to: 'someone@somewhere.com', subject: 'hey there', body: 'yo'}, fun
   if (err) console.error('Error when pushing work into the queue: ', err.stack);
 });
 ```
+
+## Client options:
+
 
 Client also accepts options as second argument in constructor:
 
