@@ -1,6 +1,6 @@
 {
   "name": "simple-redis-safe-work-queue",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Redis-based simple and safe work queue ",
   "main": "index.js",
   "scripts": {
