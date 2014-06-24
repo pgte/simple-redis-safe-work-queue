@@ -29,14 +29,14 @@ function createWorker(queueName, workerFn, options) {
   var watchdogs = {};
   if (options.runTimeoutWatchdog) {
     watchdogs.timeout = TimeoutWatchdog(queueName, options);
-    watchdogs.timeout.on('error', error);
+    watchdogs.timeout.on('error', errorIfError);
     watchdogs.timeout.on('timeout requeued', function(item) {
       self.emit('timeout requeued', item);
     });
   }
   if (options.runStalledWatchdog) {
     watchdogs.stalled = StalledWatchdog(queueName, options);
-    watchdogs.stalled.on('error', error);
+    watchdogs.stalled.on('error', errorIfError);
     watchdogs.stalled.on('stalled requeued', function(item) {
       self.emit('stalled requeued', item);
     });
@@ -69,7 +69,7 @@ function createWorker(queueName, workerFn, options) {
     if (options.password) options.auth(options.password);
     options.client.once('ready', onReady);
 
-    options.client.on('error', error);
+    options.client.on('error', errorIfError);
 
     client = Client(queueName, options);
     client.on('error', error);
