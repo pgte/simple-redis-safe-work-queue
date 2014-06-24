@@ -25,6 +25,18 @@ client.push({to: 'someone@somewhere.com', subject: 'hey there', body: 'yo'}, fun
 });
 ```
 
+You can also provide some options for the work item you're pushing:
+
+```javascript
+var options = {
+  timeout: 120e3 // 120 seconds
+};
+
+client.push({to: 'someone@somewhere.com', subject: 'hey there', body: 'yo'}, options, function(err) {
+  if (err) console.error('Error when pushing work into the queue: ', err.stack);
+});
+```
+
 ## Client options:
 
 
