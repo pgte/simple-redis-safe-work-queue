@@ -54,6 +54,7 @@ function createWorker(queueName, workerFn, options) {
   var pending = 0;
 
   self.stop = stop;
+  self.listen = listen;
 
   init();
 
@@ -78,7 +79,9 @@ function createWorker(queueName, workerFn, options) {
     if (++ readies == 2) {
       self.emit('ready');
 
-      listen();
+      if (options.autoListen) {
+        listen();
+      }
     }
   }
 
@@ -95,7 +98,9 @@ function createWorker(queueName, workerFn, options) {
     listening = false;
     var work;
 
-    setImmediate(listen);
+    if (options.autoListen) {
+      setImmediate(listen);
+    }
 
     if (err && ! stopping) error(err);
     else if (workId && ! options.stall) {
