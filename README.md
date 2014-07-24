@@ -91,6 +91,7 @@ You can pass some options on the third argument of the worker constructor:
 * popTimeout: the worker pop timeout, after which it retries, in seconds. Defaults to 3 seconds.
 * runTimeoutWatchdog: run a timeout watchdog, defaults to `true`
 * runStalledWatchdog: run a stalled watchdog, defaults to `true`
+* autoListen: worker listens automatically (otherwise you must call `.listen()` when ready for the next message), defaults to `true`
 
 ## Worker Events:
 

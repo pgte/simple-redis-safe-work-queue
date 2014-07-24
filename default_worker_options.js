@@ -7,5 +7,6 @@ module.exports = {
   stalledTimeout: 5e3, // 5 seconds
   runTimeoutWatchdog: true,
   runStalledWatchdog: true,
-  stall: false
+  stall: false,
+  autoListen: true
 };
