@@ -20,6 +20,7 @@ test('creates worker without autoListen, fetches a message and gets an empty res
   worker.fetch(work);
 
   function work(payload, cb) {
+    cb();
     t.equal(payload, null, 'payload should be null');
     t.end();
   }
