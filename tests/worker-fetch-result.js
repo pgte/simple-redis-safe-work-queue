@@ -20,34 +20,12 @@ test('push work', function(t) {
   t.end();
 });
 
-test('creates worker without autoListen and no work is received automatically until listen is called', function(t) {
+test('creates worker without autoListen, fetches a message and gets a response', function(t) {
   worker = Queue.worker(queue, work, workerOptions);
-
-  var listenCalled = false;
-  setTimeout(callListen, 5000);
-
-  var payloads = [];
+  worker.fetch();
 
   function work(payload, cb) {
-    if (!listenCalled) {
-      t.notOk(false, 'Work received when autoListen is disabled');
-      t.end();
-    }
-    else {
-      payloads.push(payload);
-      cb();
-      setTimeout(finished, 500);
-      t.end();
-    }
-  }
-
-  function callListen() {
-    worker.listen();
-    listenCalled = true;
-  }
-
-  function finished() {
-    t.deepEqual(payloads, [{a:1, b:2}]);
+    t.deepEqual(payload, {a:1, b:2});
     t.end();
   }
 });
