@@ -26,7 +26,6 @@ test('creates worker without autoListen and no work is received automatically un
   var listenCalled = false;
   setTimeout(callListen, 5000);
 
-  var times = 0;
   var payloads = [];
 
   function work(payload, cb) {
