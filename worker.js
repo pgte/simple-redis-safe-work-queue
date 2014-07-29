@@ -160,7 +160,9 @@ function createWorker(queueName, workerFn, options) {
         }
       } else {
         self.emit('work done', work);
-        dequeue(work.id, dequeued);
+        if (work) {
+          dequeue(work.id, dequeued);
+        }
       }
     }
   }
