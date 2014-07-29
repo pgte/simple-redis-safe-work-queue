@@ -50,11 +50,13 @@ function createWorker(queueName, workerFn, options) {
 
   /// state vars
   var listening = false;
+  var fetching = false;
   var stopping = false;
   var pending = 0;
 
   self.stop = stop;
   self.listen = listen;
+  self.fetch = fetch;
 
   init();
 
@@ -86,7 +88,7 @@ function createWorker(queueName, workerFn, options) {
   }
 
   function listen() {
-    if (! stopping && ! listening && pending < options.maxConcurrency) {
+    if (! stopping && ! listening && ! fetching && pending < options.maxConcurrency) {
       self.emit('listening');
       listening = true;
 
@@ -94,11 +96,19 @@ function createWorker(queueName, workerFn, options) {
     }
   }
 
+  function fetch() {
+    if (! stopping && ! listening && ! fetching && ! options.autoListen && pending < options.maxConcurrency) {
+      fetching = true;
+
+      options.client.rpoplpush(queues.pending, queues.stalled, onPop);
+    }
+  }
+
   function onPop(err, workId) {
     listening = false;
     var work;
 
-    if (options.autoListen) {
+    if (options.autoListen && !fetching) {
       setImmediate(listen);
     }
 
@@ -107,6 +117,10 @@ function createWorker(queueName, workerFn, options) {
       pending ++;
       client.client.hgetall(queueName + '#' + workId, gotWork);
     }
+    else if (fetching) {
+      workerFn.call(null, null, onWorkerFinished);
+    }
+    fetching = false;
 
     function gotWork(err, _work) {
       if (err) {
@@ -141,7 +155,9 @@ function createWorker(queueName, workerFn, options) {
         self.emit('worker error');
         pending --;
         maybeRetry(err, work);
-        listen();
+        if (!options.autoListen) {
+          listen();
+        }
       } else {
         self.emit('work done', work);
         dequeue(work.id, dequeued);
