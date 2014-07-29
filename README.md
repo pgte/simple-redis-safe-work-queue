@@ -91,7 +91,9 @@ You can pass some options on the third argument of the worker constructor:
 * popTimeout: the worker pop timeout, after which it retries, in seconds. Defaults to 3 seconds.
 * runTimeoutWatchdog: run a timeout watchdog, defaults to `true`
 * runStalledWatchdog: run a stalled watchdog, defaults to `true`
-* autoListen: worker listens automatically (otherwise you must call `.listen()` when ready for the next message), defaults to `true`
+* autoListen: worker listens automatically (otherwise you must call `.listen()` or `.fetch()` when ready for the next message), defaults to `true`
+
+The `.fetch()` method is a non-long-polling version of `.listen()`, useful when you want to get a `null` response if there are no messages, rather than waiting for one to be pushed. If you're using `autoListen: false` then you probably want to use `.fetch()`.
 
 ## Worker Events:
 
