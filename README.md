@@ -88,6 +88,7 @@ You can pass some options on the third argument of the worker constructor:
 * password: redis password
 * redisOptions: any option allowed by the [redis client](https://github.com/mranney/node_redis), defaults to `undefined`
 * maxConcurrency: the maximum pending work units. defaults to 10.
+* maxRetries: the maximum number of retries when a work unit errors. defaults to 10.
 * popTimeout: the worker pop timeout, after which it retries, in seconds. Defaults to 3 seconds.
 * runTimeoutWatchdog: run a timeout watchdog, defaults to `true`
 * runStalledWatchdog: run a stalled watchdog, defaults to `true`
