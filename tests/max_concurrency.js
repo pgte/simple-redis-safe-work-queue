@@ -10,7 +10,7 @@ var workerOptions = {
   maxConcurrency: 1
 }
 
-var timeout = 100;
+var timeout = 300;
 var workCount = 20;
 var dueTime = (workCount + 2) * timeout;
 
