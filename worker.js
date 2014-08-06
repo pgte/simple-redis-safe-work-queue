@@ -102,6 +102,9 @@ function createWorker(queueName, workerFn, options) {
 
       options.client.rpoplpush(queues.pending, queues.stalled, onPop);
     }
+    else if (options.autoListen) {
+      error(new Error('Invalid state: don\'t use fetch() when autoListen is true.'));
+    }
   }
 
   function onPop(err, workId) {
