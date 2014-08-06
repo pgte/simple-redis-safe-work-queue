@@ -3,6 +3,20 @@
   "version": "1.2.1",
   "description": "Redis-based simple and safe work queue ",
   "main": "index.js",
+  "author": {
+    "name": "Pedro Teixeira",
+    "email": "i@pgte.me"
+  },
+  "contributors": [
+    {
+      "name": "Luke Bond",
+      "email": "luke.n.bond@gmail.com"
+    },
+    {
+      "name": "Tom Gallacher",
+      "email": "me@tomg.co"
+    }
+  ],
   "scripts": {
     "test": "tap tests/*.js"
   },
@@ -17,7 +31,6 @@
     "safe",
     "simple"
   ],
-  "author": "pgte",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/pgte/simple-redis-safe-work-queue/issues"
