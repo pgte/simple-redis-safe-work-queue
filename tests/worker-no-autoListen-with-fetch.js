@@ -1,6 +1,6 @@
 var uuid = require('node-uuid').v4;
 var test = require('tap').test;
-var Queue = require('../')
+var Queue = require('../');
 
 var queue = uuid();
 var client, worker;
@@ -17,28 +17,26 @@ test('create client', function(t) {
 
 test('push work', function(t) {
   client.push({a:1, b:2});
+  client.push({a:1, b:2});
+  client.push({a:1, b:2});
   t.end();
 });
 
-test('creates worker without autoListen and no work is received automatically until listen is called', function(t) {
+test('creates worker without autoListen and two pieces of work are received when fetch is called twice', function(t) {
   worker = Queue.worker(queue, work, workerOptions);
 
-  var listenCalled = false;
-  setTimeout(callListen, 5000);
+  worker.on('listening', function () {
+    t.notOk(true, 'Listen has been called when only fetch has been used');
+    t.end();
+  });
+
+  setTimeout(finished, 5000);
 
   var payloads = [];
 
   function work(payload, cb) {
-    if (!listenCalled) {
-      t.notOk(true, 'Work received when autoListen is disabled');
-      t.end();
-    }
-    else {
-      payloads.push(payload);
-      cb();
-      setTimeout(finished, 500);
-      t.end();
-    }
+    payloads.push(payload);
+    cb();
   }
 
   function callListen() {
@@ -50,6 +48,9 @@ test('creates worker without autoListen and no work is received automatically un
     t.deepEqual(payloads, [{a:1, b:2}]);
     t.end();
   }
+
+  worker.fetch();
+  worker.fetch();
 });
 
 test('stop client', function(t) {

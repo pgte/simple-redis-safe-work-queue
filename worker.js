@@ -155,7 +155,7 @@ function createWorker(queueName, workerFn, options) {
         self.emit('worker error');
         pending --;
         maybeRetry(err, work);
-        if (!options.autoListen) {
+        if (options.autoListen) {
           listen();
         }
       } else {
@@ -181,7 +181,9 @@ function createWorker(queueName, workerFn, options) {
   function dequeued(err) {
     pending --;
     if (err) error(err);
-    listen();
+    if (options.autoListen) {
+      listen();
+    }
   }
 
 
