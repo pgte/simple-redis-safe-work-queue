@@ -13,27 +13,35 @@ for i, workId in ipairs(items) do
   if workId == item then
 
     local key = queueName .. '#' .. workId
-    local timeout = tonumber(redis.call('hget', key, 'timeout'))
+    local timeout = redis.call('hget', key, 'timeout')
 
-    -- calculate how long this one has been waiting for
-    local timesoutAt = tonumber(redis.call('zscore', timeoutQueue, workId))
+    if timeout then
+    
+      timeout = tonumber(timeout)
 
-    local willUnstall = true
+      -- calculate how long this one has been waiting for
+      local timesoutAt = tonumber(redis.call('zscore', timeoutQueue, workId))
 
-    if timesoutAt then
-      local queuedFor = timesoutAt - timeout
-      willUnstall = (queuedFor >= stalledTimeout)
+      local willUnstall = true
+
+      if timesoutAt then
+        local queuedFor = timesoutAt - timeout
+        willUnstall = (queuedFor >= stalledTimeout)
+      end
+
+      if not willUnstall then return end
+
+      redis.call('zrem', timeoutQueue, workId)
+      redis.call('zadd', timeoutQueue, timeout + now, workId)
+      redis.call('lrem', stalledQueue, 1, workId)
+      redis.call('lrem', pendingQueue, 1, workId)
+      redis.call('lpush', pendingQueue, workId)
+
+      return workId
+
+    else
+      -- work is there no more, remove it from the stalled queue
+      redis.call('lrem', stalledQueue, 1, workId)
     end
-
-    if not willUnstall then return end
-
-    redis.call('zrem', timeoutQueue, workId)
-    redis.call('zadd', timeoutQueue, timeout + now, workId)
-    redis.call('lrem', stalledQueue, 1, workId)
-    redis.call('lrem', pendingQueue, 1, workId)
-    redis.call('lpush', pendingQueue, workId)
-
-    return workId
-
   end
 end
