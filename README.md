@@ -15,7 +15,7 @@ Example of a client producing work:
 ```javascript
 var Queue = require('simple-redis-safe-work-queue');
 
-client = Queue.client('send-emails');
+client = Queue.client('send-email');
 client.push({to: 'someone@somewhere.com', subject: 'hey there', body: 'yo'});
 ```
 
