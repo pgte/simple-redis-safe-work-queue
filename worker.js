@@ -155,7 +155,7 @@ function createWorker(queueName, workerFn, options) {
 
     function onWorkerFinished(err) {
       if (err) {
-        self.emit('worker error');
+        self.emit('worker error', err);
         pending --;
         maybeRetry(err, work);
         if (options.autoListen) {
