@@ -162,8 +162,8 @@ function createWorker(queueName, workerFn, options) {
           listen();
         }
       } else {
-        self.emit('work done', work);
         if (work) {
+          self.emit('work done', work.payload);
           dequeue(work.id, dequeued);
         }
       }
