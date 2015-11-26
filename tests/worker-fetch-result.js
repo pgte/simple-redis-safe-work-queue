@@ -25,7 +25,7 @@ test('creates worker without autoListen, fetches a message and gets a response',
   worker.fetch();
 
   worker.on('work done', function(work) {
-    t.deepEqual(work.payload, {a:1, b:2});
+    t.deepEqual(work, {a:1, b:2});
   });
 
   function work(payload, cb) {
