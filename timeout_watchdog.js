@@ -33,7 +33,7 @@ function createWatchdog(queueName, options) {
 
   function init() {
     options.client = Redis.createClient(options.port, options.host, options.redisOptions);
-    if (options.password) options.auth(options.password);
+    if (options.password) options.client.auth(options.password);
     options.client.once('ready', onReady);
     options.client.on('error', errorIfError);
   }
