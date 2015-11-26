@@ -103,7 +103,7 @@ A worker emits the following events:
 * `emit('ready')`: when redis client is ready
 * `emit('listening')`: when listening for work
 * `emit('worker error', err)`: when a worker error occurs
-* `emit('work done', payload)`: when a worker finishes a piece of work
+* `emit('work done', work)`: when a worker finishes a piece of work
 * `emit('repush', payload)`: when a work unit is being repushed after failure
 * `emit('max retries', lastError, payload)`: when the maximum retries has been reached
 

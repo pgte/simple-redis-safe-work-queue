@@ -33,6 +33,11 @@ test('worker retries for maxRetries', function(t) {
   }
 
   var maxRetries = 0;
+
+  worker.on('worker error', function(err) {
+    t.equal('something awful has happened', err.message);
+  });
+
   worker.on('max retries', function(err, payload) {
     t.equal(++ maxRetries, payload);
   });
