@@ -38,8 +38,8 @@
   "homepage": "https://github.com/pgte/simple-redis-safe-work-queue",
   "dependencies": {
     "json-stringify-safe": "^5.0.0",
-    "node-uuid": "^1.4.1",
     "redis": "^2.5.3",
+    "uuid": "^3.0.0",
     "xtend": "^4.0.0"
   },
   "devDependencies": {
