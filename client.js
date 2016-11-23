@@ -1,7 +1,7 @@
 var defaultClientOptions = require('./default_client_options');
 var EventEmitter = require('events').EventEmitter;
 var stringify = require('json-stringify-safe');
-var uuid = require('node-uuid').v4;
+var uuid = require('uuid').v4;
 var extend = require('xtend');
 var Redis = require('redis');
 
