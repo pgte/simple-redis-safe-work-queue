@@ -141,6 +141,10 @@ function createWorker(queueName, workerFn, options) {
           lrem(queues.stalled, 1, workId).
           exec(done);
       }
+      else {
+        self.emit('work object empty', workId);
+        dequeue(workId, dequeued);
+      }
     }
 
     function done(err) {
